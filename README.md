@@ -50,18 +50,18 @@ This should take a couple of minutes.
     * `DeepSTORM3D/data_utils.py` implements the positions and photons sampling, and defines the dataset classes.
     * The folder `Mat_Files` includes phase masks needed to run the demos.
 * CNN models and loss function
-    * `cnn_utils.py` this script contains the two CNN models used in this work.
-    * `loss_utils.py` implements the loss function, and an approximation of the Jaccard index.
+    * `DeepSTORM3D/cnn_utils.py` this script contains the two CNN models used in this work.
+    * `DeepSTORM3D/loss_utils.py` implements the loss function, and an approximation of the Jaccard index.
 * Training scripts
-    * `Training_Localization_Model.py` this script trains a localization model based on the pre-calculated training and validation examples in `GeneratingTrainingExamples.py`. Here, the phase mask is assumed to be fixed (either off-the-shelf or learned), and we're only interested in a dense localization model.
-    * `PSF_Learning.py` this script learns an optimized PSF. The training examples in this case are only simulated 3D locations and intensities.
+    * `DeepSTORM3D/Training_Localization_Model.py` this script trains a localization model based on the pre-calculated training and validation examples in `GeneratingTrainingExamples.py`. Here, the phase mask is assumed to be fixed (either off-the-shelf or learned), and we're only interested in a dense localization model.
+    * `DeepSTORM3D/PSF_Learning.py` this script learns an optimized PSF. The training examples in this case are only simulated 3D locations and intensities.
 * Post-processing and evaluation
-    * `postprocessing_utils.py` implements 3D local maxima finding and CoG estimation with a fixed spherical diameter on GPU using max-pooling.
-    * `Testing_Localization_Model.py` evaluates a learned localization model on either simulated or experimental images. In demo2/demo5 this module is used with pre-trained weights to localize experimental data. In demo3 it is used to localize simulated data.
-    * `assessment_utils.py` - this script contains a function that calculates the Jaccard index and the RMSE in both the axial and lateral dimensions given two sets of points in 3D.
+    * `DeepSTORM3D/postprocessing_utils.py` implements 3D local maxima finding and CoG estimation with a fixed spherical diameter on GPU using max-pooling.
+    * `DeepSTORM3D/Testing_Localization_Model.py` evaluates a learned localization model on either simulated or experimental images. In demo2/demo5 this module is used with pre-trained weights to localize experimental data. In demo3 it is used to localize simulated data.
+    * `DeepSTORM3D/assessment_utils.py` - this script contains a function that calculates the Jaccard index and the RMSE in both the axial and lateral dimensions given two sets of points in 3D.
 * Visualization and saving/loading 
-    * `vis_utils.py` includes plotting functions.
-    * `helper_utils.py` includes saving/loading functions.
+    * `DeepSTORM3D/vis_utils.py` includes plotting functions.
+    * `DeepSTORM3D/helper_utils.py` includes saving/loading functions.
  
  # Demo examples
  
@@ -84,7 +84,7 @@ This should take a couple of minutes.
 
 # Learning a localization model
 
-To learn a localization model for your setup, you need to supply a calibrated phase mask (e.g. using beads on the coverslip), and generate a new parameter settings script similar to the ones in the `Demos` folder. The `Docs` folder includes a pdf file with snapshots detailing the steps in `demo1.py` to ease the user introduction to DeepSTORM3D. Please go through these while trying `demo1.py` to get a grasp of how the code works.
+To learn a localization model for your setup, you need to supply a calibrated phase mask (e.g. using beads on the coverslip), and generate a new parameter settings script similar to the ones in the `Demos` folder. The `Docs` folder includes the pdf file `demo1_documentation.pdf` with snapshots detailing the steps in `demo1.py` to ease the user introduction to DeepSTORM3D. Please go through these while trying `demo1.py` to get a grasp of how the code works.
 
 # Citation
 
