@@ -238,7 +238,7 @@ class PhasesOnlineDataset(Dataset):
         return phases_tensor, Nphotons, bool_grid
 
 
-# PSF images with corresponding xyz labels dataset
+# Experimental images with normalization dataset
 class ExpDataset(Dataset):
 
     # initialization of the dataset
