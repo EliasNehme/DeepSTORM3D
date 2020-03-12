@@ -69,7 +69,7 @@ This should take a couple of minutes.
     1. `demo1.py` - learns a CNN for localizing high-density Tetrapods under STORM conditions. The script simulates training examples before learning starts. It takes approximately 30 hours to train a model from scratch on a Titan Xp.
     2. `demo2.py` - evaluates a pre-trained CNN for localizing experimental Tetrapods (Fig. 3 main text). The script plots the input images with the localizations voerlaid as red crosses on top. The resulting localizations are saved in a csv file under the folder `Experimental_Data/Tetrapod_demo2/`. This demo takes about 1 minute on a Titan Xp.
     3. `demo3.py` - evaluates a pre-trained CNN for localizing simulated Tetrapods (Fig. 4 main text). The script plots the simulated input and the regenerated image, and also compares the recovery with the GT positons in 3D. This demo takes about 1 second on a Titan Xp.
-    4. `demo4.py` - learns an optimized PSF from scratch. The learned phase mask and its corresponding PSF are plotted each 5 batches in the first 4 epochs, and afterwards only once each 50 batches. Learning takes approximately 40 hours to converge on a Titan Xp. 
+    4. `demo4.py` - learns an optimized PSF from scratch. The learned phase mask and its corresponding PSF are plotted each 5 batches in the first 4 epochs, and afterwards only once each 50 batches. Learning takes approximately 30 hours to converge on a Titan Xp. 
     5. `demo5.py` - evaluates a pre-trained CNN for localizing an experimental snapshot of a U2OS cell nucleus with the learned PSF. The experimental image can be switched from 'frm1' to 'frm2' in `Experimental_Data/`. This demo takes about 1 second on a Titan Xp.
 
 * The `Demos` folder includes the following:
