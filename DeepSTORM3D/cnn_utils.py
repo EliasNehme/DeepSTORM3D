@@ -94,7 +94,7 @@ class OpticsDesignCNN(nn.Module):
         self.layer7 = Conv2DLeakyReLUBN(64 + 1, 64, 3, 1, 1, 0.2)
         self.layer8 = Conv2DLeakyReLUBN(64 + 1, 64, 3, 1, 1, 0.2)
         self.layer9 = Conv2DLeakyReLUBN(64 + 1, 64, 3, 1, 1, 0.2)
-        self.layer10 = nn.Conv2d(64, 51, kernel_size=1, dilation=1)
+        self.layer10 = nn.Conv2d(64, setup_params['D'], kernel_size=1, dilation=1)
         self.pred = nn.Hardtanh(min_val=0.0, max_val=setup_params['scaling_factor'])
 
     def forward(self, mask, phase_emitter, Nphotons):
