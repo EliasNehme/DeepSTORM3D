@@ -204,7 +204,7 @@ def demo3_parameters():
     initial_learning_rate = 0.0005
 
     # scaling factor for the loss function
-    scaling_factor = 100.0
+    scaling_factor = 800.0
 
     # learning dictionary
     learning_dict = {'results_path': results_path, 'dilation_flag': dilation_flag, 'batch_size': batch_size,
