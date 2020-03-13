@@ -149,7 +149,7 @@ def gen_data(setup_params):
 
     # set the number of particles to the middle of the range for validation
     num_particles_range = setup_params['num_particles_range']
-    setup_params['num_particles_range'] = [18, 19]
+    setup_params['num_particles_range'] = [num_particles_range[1]//2, num_particles_range[1]//2 + 1]
 
     # sample validation examples
     for i in range(nvalid_batches):
