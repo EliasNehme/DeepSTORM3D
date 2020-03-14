@@ -74,7 +74,7 @@ This should take a couple of minutes.
 
 * The `Demos` folder includes the following:
     * `Results_Tetrapod_demo2` contains pre-trained model weights and training metrics needed to run demo2.
-    * `Results_Tetrapod_demo3` contains  pre-trained model weights and training metrics needed to run demo2
+    * `Results_Tetrapod_demo3` contains  pre-trained model weights and training metrics needed to run demo3.
     * `Results_Learned_demo5` contains pre-trained model weights and training metrics needed to run demo5.
     * `parameter_setting_demo*` contains the specified setup parameters for each of the demos.
 
