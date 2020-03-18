@@ -31,14 +31,13 @@ This code implements two different applications of CNNs in dense 3D localization
 There's no need to download any dataset as the code itself generates the training and the test sets. demo 4 illustrates the net performance on experimental data acquired at the lab taken with the learned PSF.
 
 # System requirements
-* The software was tested on a *Linux* system with Ubuntu version 18.04.
-* Exact versions of python packages needed to run this code are in the `environment.yml` file.
+* The software was tested on a *Linux* system with Ubuntu version 18.0, and a *Windows* system with Windows 10 Home.  
 * Training and evaluation were run on a standard workstation equipped with 32 GB of memory, an Intel(R) Core(TM) i7 − 8700, 3.20 GHz CPU, and a NVidia GeForce Titan Xp GPU with 12 GB of video memory.
 
 # Installation instructions
 1. Download this repository as a zip file (or clone it using git).
 2. Go to the downloaded directory and unzip it (or clone it using git).
-3. The [conda](https://docs.conda.io/en/latest/) environment for this project is given in `environment.yml`. To replicate the environment use the command: `conda env create -f environment.yml` from within the downloaded directory.
+3. The [conda](https://docs.conda.io/en/latest/) environment for this project is given in `environment_<os>.yml` where `<os>` should be substituted with your operating system. For example, to replicate the environment on a linux system use the command: `conda env create -f environment_linux.yml` from within the downloaded directory.
 This should take a couple of minutes.
 4. After activation of the environment using: `conda activate deep-storm3d`, you're set to go!
 
