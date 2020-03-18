@@ -381,4 +381,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # run the data generation process
-    test_model(args.path_results, args.postprocessing_params, args.exp_imgs_path, args.seed)
+    xyz_rec, conf_rec = test_model(args.path_results, args.postprocessing_params, args.exp_imgs_path, args.seed)
