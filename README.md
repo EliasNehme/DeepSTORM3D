@@ -28,7 +28,7 @@ This code implements two different applications of CNNs in dense 3D localization
 ![](Figures/masklearninganimation.gif "This movie shows the phase mask (left) and the corresponding PSF (right) being learned over training iterations. Note that the phase mask is initialized to zero modulation, meaning the standard microscope PSF. Scale bar is 2 microns.")
 
 
-There's no need to download any dataset as the code itself generates the training and the test sets. demo 4 illustrates the net performance on experimental data acquired at the lab taken with the learned PSF.
+There's no need to download any dataset as the code itself generates the training and the test sets. Demo 1 illustrates how to train a localization model based on a retreived phase mask, and demo 4 illustrates how the method can be sued to learn an optimzied phase mask. The remaining demos evaluates pre-trained models on both simulated and experimental data.
 
 # System requirements
 * The software was tested on a *Linux* system with Ubuntu version 18.0, and a *Windows* system with Windows 10 Home.  
