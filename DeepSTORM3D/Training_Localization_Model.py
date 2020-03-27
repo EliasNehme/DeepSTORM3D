@@ -190,7 +190,7 @@ def learn_localization_cnn(setup_params):
 
                 # running statistics
                 valid_loss += val_loss.item()
-                jacc_ind = jaccard_coeff(outputs//setup_params['scaling_factor'], targets)
+                jacc_ind = jaccard_coeff(outputs/scaling_factor, targets)
                 valid_jacc += jacc_ind.item()
 
         # calculate and print mean validation loss and jaccard
