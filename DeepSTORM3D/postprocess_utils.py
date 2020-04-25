@@ -71,8 +71,8 @@ class Postprocess(Module):
         pred_thresh = torch.where(pred_vol > self.thresh, pred_vol, self.zero)
 
         # apply the 3D maxpooling operation to find local maxima
-        pred_thresh_max = self.maxpool(pred_thresh)
-        conf_vol = torch.where((pred_thresh_max > self.zero) & (pred_thresh_max == pred_thresh), pred_thresh_max, self.zero)
+        conf_vol = self.maxpool(pred_thresh)
+        conf_vol = torch.where((conf_vol > self.zero) & (conf_vol == pred_thresh), conf_vol, self.zero)
 
         # find locations of confs (bigger than 0)
         conf_vol = torch.squeeze(conf_vol)
