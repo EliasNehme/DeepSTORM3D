@@ -1,6 +1,6 @@
 # DeepSTORM3D
 
-This code accompanies the paper: ["DeepSTORM3D: dense 3D localization microcopy and point spread function design by deep learning"](https://arxiv.org/abs/1906.09957)
+This code accompanies the paper: ["DeepSTORM3D: dense 3D localization microcopy and PSF design by deep learning"](https://arxiv.org/abs/1906.09957)
 
 # Contents
 
