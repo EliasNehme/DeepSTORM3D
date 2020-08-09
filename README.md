@@ -89,11 +89,15 @@ To learn a localization model for your setup, you need to supply a calibrated ph
 
 If you use this code for your research, please cite our paper:
 ```
-@article{nehme2019dense,
-  title={DeepSTORM3D: dense three dimensional localization microscopy and point spread function design by deep learning},
-  author={Nehme, Elias and Freedman, Daniel and Gordon, Racheli and Ferdman, Boris and Michaeli, Tomer and Shechtman, Yoav},
-  journal={arXiv preprint arXiv:1906.09957},
-  year={2019}
+@article{nehme2020deepstorm3d,
+  title={DeepSTORM3D: dense 3D localization microscopy and PSF design by deep learning},
+  author={Nehme, Elias and Freedman, Daniel and Gordon, Racheli and Ferdman, Boris and Weiss, Lucien E and Alalouf, Onit and Naor, Tal and Orange, Reut and Michaeli, Tomer and Shechtman, Yoav},
+  journal={Nature Methods},
+  volume={17},
+  number={7},
+  pages={734--740},
+  year={2020},
+  publisher={Nature Publishing Group}
 }
 ```
 
