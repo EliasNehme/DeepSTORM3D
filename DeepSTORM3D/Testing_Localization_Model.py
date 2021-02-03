@@ -11,7 +11,7 @@ import glob
 from skimage.io import imread
 import time
 import argparse
-from DeepSTORM3D.data_utils import generate_batch, complex_to_tensor, ExpDataset
+from DeepSTORM3D.data_utils import generate_batch, complex_to_tensor, ExpDataset, sort_names_tif
 from DeepSTORM3D.cnn_utils import LocalizationCNN
 from DeepSTORM3D.vis_utils import ShowMaskPSF, ShowRecovery3D, ShowLossJaccardAtEndOfEpoch
 from DeepSTORM3D.vis_utils import PhysicalLayerVisualization, ShowRecNetInput
@@ -175,6 +175,7 @@ def test_model(path_results, postprocess_params, exp_imgs_path=None, seed=66):
 
         # read all imgs in the experimental data directory assuming ".tif" extension
         img_names = glob.glob(exp_imgs_path + '*.tif')
+        img_names = sort_names_tif(img_names)
 
         # if given only 1 image then show xyz in 3D and recovered image
         if len(img_names) == 1:
