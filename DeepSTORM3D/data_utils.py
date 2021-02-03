@@ -277,6 +277,19 @@ class ExpDataset(Dataset):
 
         return im_tensor
 
+# ======================================================================================================================
+# Sorting function in case glob uploads images in the wrong order
+# ======================================================================================================================
 
+# ordering file names according to number
+def sort_names_tif(img_names):
+    nums = []
+    for i in img_names:
+        i2 = i .split(".tif")
+        i3 = i2[0].split("/")
+        nums.append(int(i3[-1]))
+    indices = np.argsort(np.array(nums))
+    fixed_names = [img_names[i] for i in indices]
+    return fixed_names
 
 
