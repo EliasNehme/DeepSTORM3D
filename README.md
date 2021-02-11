@@ -36,7 +36,7 @@ There's no need to download any dataset as the code itself generates the trainin
 
 # Installation instructions
 1. Download this repository as a zip file (or clone it using git).
-2. Go to the downloaded directory and unzip it (or clone it using git).
+2. Go to the downloaded directory and unzip it.
 3. The [conda](https://docs.conda.io/en/latest/) environment for this project is given in `environment_<os>.yml` where `<os>` should be substituted with your operating system. For example, to replicate the environment on a linux system use the command: `conda env create -f environment_linux.yml` from within the downloaded directory.
 This should take a couple of minutes.
 4. After activation of the environment using: `conda activate deep-storm3d`, you're set to go!
