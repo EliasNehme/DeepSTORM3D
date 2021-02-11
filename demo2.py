@@ -14,7 +14,7 @@ path_curr = os.getcwd()
 path_results = path_curr + '/Demos/Results_Tetrapod_demo2/'
 
 # path to experimental images
-path_exp_data = path_curr + '/Experimental_Data/Tetrapod_demo2/'
+path_exp_data = path_curr + '/Experimental_Data/Tetrapod_demo2_crop/'
 
 # postprocessing parameters
 postprocessing_params = {'thresh': 40, 'radius': 4}
