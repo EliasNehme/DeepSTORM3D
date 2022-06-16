@@ -94,7 +94,7 @@ class Postprocess(Module):
             xloc, yloc, zloc = self.local_avg(xbool, ybool, zbool, pred_vol_pad, num_pts, self.device)
 
             # convert lists and tensors to numpy
-            xloc, yloc, zloc = tensor_to_np(xloc), tensor_to_np(xloc), tensor_to_np(xloc)
+            xloc, yloc, zloc = tensor_to_np(xloc), tensor_to_np(yloc), tensor_to_np(zloc)
             xbool, ybool, zbool = tensor_to_np(xbool), tensor_to_np(ybool), tensor_to_np(zbool)
 
             # dimensions of the prediction
