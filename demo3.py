@@ -14,7 +14,7 @@ path_curr_dir = os.getcwd()
 path_results = path_curr_dir + '/Demos/Results_Tetrapod_demo3/'
 
 # set the postprocessing parameters
-postprocessing_params = {'thresh': 80, 'radius': 4}
+postprocessing_params = {'thresh': 80, 'radius': 4, 'keep_singlez': False}
 
 # model testing
 seed = 11  # you can change this to randomize the sampled example

@@ -6,6 +6,7 @@
 from math import pi
 import scipy.io as sio
 import os
+import torch
 
 
 def demo2_parameters():
@@ -231,11 +232,23 @@ def demo2_parameters():
                        'checkpoint_path': checkpoint_path}
 
     # ======================================================================================
+    # device to use for training/validation (optimally should be a cuda device)
+    # ======================================================================================
+    
+    # device to train/evaluate on
+    device_id = 0
+    device = torch.device("cuda:" + str(device_id) if torch.cuda.is_available() else "cpu")
+    
+    # device dictionary
+    device_dict = {'device': device}
+
+    # ======================================================================================
     # final resulting dictionary including all parameters
     # ======================================================================================
 
     settings = {**mask_opts, **num_particles_dict, **nsig_dict, **blur_dict, **nonunif_bg_dict, **read_noise_dict,
-                **norm_dict, **optics_dict, **data_dims_dict, **training_dict, **learning_dict, **checkpoint_dict}
+                **norm_dict, **optics_dict, **data_dims_dict, **training_dict, **learning_dict, **checkpoint_dict, 
+                **device_dict}
 
     return settings
 

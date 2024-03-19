@@ -51,7 +51,7 @@ def GaussianKernel(shape=(7, 7, 7), sigma=1, normfactor=1):
     if maxh != 0:
         h /= maxh
         h = h * normfactor
-    h = torch.from_numpy(h).type(torch.FloatTensor).cuda() # Variable()
+    h = torch.from_numpy(h).type(torch.FloatTensor)
     h = h.unsqueeze(0)
     h = h.unsqueeze(1)
     return h
@@ -59,9 +59,9 @@ def GaussianKernel(shape=(7, 7, 7), sigma=1, normfactor=1):
 
 # define the 3D extended loss function from DeepSTORM
 class KDE_loss3D(nn.Module):
-    def __init__(self, factor):
+    def __init__(self, factor, device):
         super(KDE_loss3D, self).__init__()
-        self.kernel = GaussianKernel()
+        self.kernel = GaussianKernel().to(device)
         self.factor = factor
 
     def forward(self, pred_bol, target_bol):

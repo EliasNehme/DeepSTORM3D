@@ -84,7 +84,7 @@ def learn_localization_cnn(setup_params):
 
     # loss function
     scaling_factor = setup_params['scaling_factor']
-    criterion = KDE_loss3D(scaling_factor)
+    criterion = KDE_loss3D(scaling_factor, device)
 
     # Model layers and number of parameters
     print(cnn)

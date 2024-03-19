@@ -21,11 +21,8 @@ def gen_data(setup_params):
     np.random.seed(566)
 
     # calculate on GPU if available
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = setup_params['device']
     torch.backends.cudnn.benchmark = True
-
-    # save the device to the settings dictionary
-    setup_params['device'] = device
 
     # calculate the effective sensor pixel size taking into account magnification and set the recovery pixel size to be
     # the same such that sampling of training positions is performed on this coarse grid

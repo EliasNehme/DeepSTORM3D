@@ -87,9 +87,6 @@ def learn_mask(setup_params):
     max_epochs, initial_learning_rate = setup_params['max_epochs'], setup_params['initial_learning_rate']
     steps_per_epoch = setup_params['ntrain_batches']
 
-    # gap between validation and training loss
-    gap_thresh = 1e-4
-
     # adam optimizer
     optimizer = Adam(list(cnn.parameters()) + [mask_param], lr=initial_learning_rate)
 
@@ -98,7 +95,7 @@ def learn_mask(setup_params):
 
     # loss function
     scaling_factor = setup_params['scaling_factor']
-    criterion = KDE_loss3D(scaling_factor)
+    criterion = KDE_loss3D(scaling_factor, device)
 
     # Model layers and number of parameters
     print(cnn)
@@ -129,7 +126,7 @@ def learn_mask(setup_params):
     else:
 
         # start from scratch
-        start_epoch, end_epoch, num_epochs = 0, setup_params['max_epochs'], setup_params['max_epochs']
+        start_epoch, end_epoch, num_epochs = 0, max_epochs, max_epochs
 
         # initialize the learning results dictionary
         learning_results = {'train_loss': [], 'train_jacc': [], 'valid_loss': [], 'valid_jacc': [],

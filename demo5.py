@@ -18,7 +18,7 @@ path_results = path_curr + '/Demos/Results_Learned_demo5/'
 path_exp_data = path_curr + '/Experimental_Data/Learned_demo5_frm2/'
 
 # postprocessing parameters
-postprocessing_params = {'thresh': 80, 'radius': 4}
+postprocessing_params = {'thresh': 80, 'radius': 4, 'keep_singlez': False}
 
 # test the model by comparing the regenerated image alongside the 3D positions
 xyz_rec, conf_rec = test_model(path_results, postprocessing_params, path_exp_data)

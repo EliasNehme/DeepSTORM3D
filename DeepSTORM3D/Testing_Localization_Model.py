@@ -1,21 +1,23 @@
 # Import modules and libraries
-import torch
-from torch.utils.data import DataLoader
+import numpy as np
+import glob
+import time
+from datetime import datetime
+import argparse
 import csv
 import pickle
-import numpy as np
 import matplotlib
 matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
-import glob
 from skimage.io import imread
-import time
-import argparse
+import torch
+from torch.utils.data import DataLoader
+from torch.nn.functional import interpolate
 from DeepSTORM3D.data_utils import generate_batch, complex_to_tensor, ExpDataset, sort_names_tif
 from DeepSTORM3D.cnn_utils import LocalizationCNN
 from DeepSTORM3D.vis_utils import ShowMaskPSF, ShowRecovery3D, ShowLossJaccardAtEndOfEpoch
 from DeepSTORM3D.vis_utils import PhysicalLayerVisualization, ShowRecNetInput
-from DeepSTORM3D.physics_utils import EmittersToPhases
+from DeepSTORM3D.physics_utils import EmittersToPhases, calc_bfp_grids
 from DeepSTORM3D.postprocess_utils import Postprocess
 from DeepSTORM3D.assessment_utils import calc_jaccard_rmse
 from DeepSTORM3D.helper_utils import normalize_01, xyz_to_nm
@@ -62,8 +64,8 @@ def test_model(path_results, postprocess_params, exp_imgs_path=None, seed=66):
     cnn.load_state_dict(torch.load(path_results + 'weights_best_loss.pkl'))
 
     # post-processing module on CPU/GPU
-    thresh, radius = postprocess_params['thresh'], postprocess_params['radius']
-    postprocessing_module = Postprocess(thresh, radius, setup_params)
+    thresh, radius, keep_singlez = postprocess_params['thresh'], postprocess_params['radius'], postprocess_params['keep_singlez']
+    postprocessing_module = Postprocess(setup_params, thresh, radius, keep_singlez)
 
     # if no experimental imgs are supplied then sample a random example
     if exp_imgs_path is None:
@@ -169,7 +171,7 @@ def test_model(path_results, postprocess_params, exp_imgs_path=None, seed=66):
         ShowRecNetInput(test_pred_im, 'Recovered Input Matching Net Localizations')
 
         # return recovered locations and net confidence
-        return xyz_rec, conf_rec
+        return np.squeeze(xyz_rec, 0), conf_rec
 
     else:
 
@@ -234,6 +236,7 @@ def test_model(path_results, postprocess_params, exp_imgs_path=None, seed=66):
             ax.set_xlabel('X [um]')
             ax.set_ylabel('Y [um]')
             ax.set_zlabel('Z [um]')
+            plt.gca().invert_yaxis()
             plt.title('3D Recovered Positions')
 
             # report the number of found emitters
@@ -244,9 +247,19 @@ def test_model(path_results, postprocess_params, exp_imgs_path=None, seed=66):
             # ==========================================================================================================
 
             # visualization module to visualize the 3D positions recovered by the net as images
-            H, W = exp_im.shape
+            _, _, H, W = exp_im.shape
             setup_params['H'], setup_params['W'] = H, W
             psf_module_vis = PhysicalLayerVisualization(setup_params, 0, 0, 1)
+            
+            # if the grid is too large then pre-compute the phase grids again
+            if H > setup_params['Hmask'] or W > setup_params['Wmask']:
+                setup_params['pixel_size_SLM'] /= 2
+                setup_params['Hmask'] *= 2
+                setup_params['Wmask'] *= 2
+                setup_params = calc_bfp_grids(setup_params)
+                mask_param = interpolate(mask_param.unsqueeze(0).unsqueeze(1), scale_factor=(2,2), mode="nearest")
+                mask_param = mask_param.squeeze(0).squeeze(1)
+                psf_module_vis = PhysicalLayerVisualization(setup_params, 0, 0, 1)
 
             # turn recovered positions into phases
             xyz_rec = np.expand_dims(xyz_rec, 0)
@@ -264,7 +277,7 @@ def test_model(path_results, postprocess_params, exp_imgs_path=None, seed=66):
             ShowRecNetInput(exp_pred_im, 'Recovered Input Matching Net Localizations')
 
             # return recovered locations and net confidence
-            return xyz_rec, conf_rec
+            return np.squeeze(xyz_rec, 0), conf_rec
 
         else:
 
@@ -281,7 +294,7 @@ def test_model(path_results, postprocess_params, exp_imgs_path=None, seed=66):
             tall_start = time.time()
 
             # needed pixel-size for plotting if only few images are in the folder
-            visualize_flag, pixel_size_FOV = num_imgs < 100, setup_params['pixel_size_FOV']
+            pixel_size_FOV = setup_params['pixel_size_FOV']
 
             # needed recovery pixel size and minimal axial height for turning ums to nms
             psize_rec_xy, zmin = setup_params['pixel_size_rec'], setup_params['zmin']
@@ -312,7 +325,7 @@ def test_model(path_results, postprocess_params, exp_imgs_path=None, seed=66):
 
                     # if this is the first image, get the dimensions and the relevant center for plotting
                     if im_ind == 0:
-                        N, C, H, W = exp_im_tensor.size()
+                        _, _, H, W = exp_im_tensor.size()
                         ch, cw = np.floor(H / 2), np.floor(W / 2)
 
                     # if prediction is empty then set number fo found emitters to 0
@@ -325,6 +338,9 @@ def test_model(path_results, postprocess_params, exp_imgs_path=None, seed=66):
                         xyz_save = xyz_to_nm(xyz_rec, H*2, W*2, psize_rec_xy, zmin)
                         results = np.vstack((results, np.column_stack((frm_rec, xyz_save, conf_rec))))
 
+                    # visualize the first 10 images regardless of the number of expeimental frames
+                    visualize_flag = True if im_ind < 10 else (num_imgs <= 100)
+                    
                     # if the number of imgs is small then plot each image in the loop with localizations
                     if visualize_flag:
 
@@ -353,7 +369,9 @@ def test_model(path_results, postprocess_params, exp_imgs_path=None, seed=66):
 
             # write the results to a csv file named "localizations.csv" under the exp img folder
             row_list = results.tolist()
-            with open(exp_imgs_path + 'localizations.csv', 'w', newline='') as file:
+            curr_dt = datetime.now()
+            curr_date, curr_time = f'{curr_dt.day}{curr_dt.month}{curr_dt.year}', f'{curr_dt.hour}{curr_dt.minute}{curr_dt.second}'
+            with open(exp_imgs_path + f'localizations' + '_' + curr_date + '_' + curr_time + '.csv', 'w', newline='') as file:
                 writer = csv.writer(file)
                 writer.writerows(row_list)
 

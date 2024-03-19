@@ -1,7 +1,7 @@
 # Import modules and libraries
 import numpy as np
 import torch
-from torch.nn import Module, MaxPool3d, ConstantPad3d
+from torch.nn import Module, MaxPool3d, ConstantPad3d, MaxPool2d
 from torch.nn.functional import conv3d
 
 
@@ -12,16 +12,18 @@ def tensor_to_np(x):
 
 # post-processing on GPU: thresholding and local maxima finding
 class Postprocess(Module):
-    def __init__(self, thresh, radius, setup_params):
+    def __init__(self, setup_params, thresh=40, radius=4, keep_singlez=True):
         super().__init__()
-        self.thresh = thresh
-        self.r = radius
         self.device = setup_params['device']
         self.psize_xy = setup_params['pixel_size_rec']
         self.psize_z = setup_params['pixel_size_axial']
         self.zmin = setup_params['zmin']
-        self.upsampling_shift = 0  # 2 due to floor(W/2) affected by upsampling factor of 4
+        self.upsampling_shift = 2  # 0 => due to floor(W/2) affected by upsampling factor of 4
+        self.thresh = thresh
+        self.r = radius
+        self.keep_singlez = keep_singlez
         self.maxpool = MaxPool3d(kernel_size=2*self.r + 1, stride=1, padding=self.r)
+        self.maxpool2 = MaxPool2d(kernel_size=2*self.r + 1, stride=1, padding=self.r)
         self.pad = ConstantPad3d(self.r, 0.0)
         self.zero = torch.FloatTensor([0.0]).to(self.device)
 
@@ -34,6 +36,21 @@ class Postprocess(Module):
         sfilter = torch.ones_like(xfilter)
         self.local_filter = torch.cat((sfilter, xfilter, yfilter, zfilter), 0).to(self.device)
 
+    def keep_maxz(self, conf_vol):
+
+        # get the maximum value in z per xy
+        D, H, W = conf_vol.shape
+        max_proj, _ = torch.max(conf_vol, dim=0, keepdim=True)
+
+        # keep only local maxima in 2d
+        max_proj = self.maxpool2(max_proj.unsqueeze(0))
+        max_proj = max_proj.squeeze(0)
+
+        # keep only maximum
+        conf_vol_out = torch.where(conf_vol == max_proj.expand(D, H, W), conf_vol, self.zero)
+
+        return conf_vol_out
+    
     def local_avg(self, xbool, ybool, zbool, pred_vol_pad, num_pts, device):
 
         # create the concatenated tensor of all local volumes
@@ -73,6 +90,11 @@ class Postprocess(Module):
         # apply the 3D maxpooling operation to find local maxima
         conf_vol = self.maxpool(pred_thresh)
         conf_vol = torch.where((conf_vol > self.zero) & (conf_vol == pred_thresh), conf_vol, self.zero)
+        
+        # keep only a single z in each xy sub-pixel
+        if self.keep_singlez:
+            conf_vol = torch.squeeze(conf_vol)
+            conf_vol = self.keep_maxz(conf_vol)
 
         # find locations of confs (bigger than 0)
         conf_vol = torch.squeeze(conf_vol)

@@ -44,6 +44,9 @@ def calc_bfp_grids(setup_params):
     XX, YY = np.meshgrid(Xang, Xang)
     r = np.sqrt(XX ** 2 + YY ** 2)  # radial coordinate s.t. r = NA/noil at edge of E field support
 
+    # the mask dictated by the objective NA
+    circ_NA = r <= 1
+    
     # defocus aberration in oil
     koil = 2 * pi * noil / lamda  # [1/um]
     sin_theta_oil = r  # um
@@ -61,7 +64,7 @@ def calc_bfp_grids(setup_params):
     cos_theta_water = np.sqrt(1 - sin_theta_water ** 2) * circ_water
 
     # circular aperture to impose on the mask in the SLM
-    circ = circ_water.astype("float32")
+    circ = circ_water.astype("float32") * circ_NA.astype("float32") * circ_oil.astype("float32")
 
     # Inputs for the calculation of lateral and axial phases
     Xgrid = 2 * pi * XI * M / (lamda * f_4f)
@@ -161,12 +164,82 @@ def batch_ifftshift2d(x):
 # of images (one per emitter) depending on the 3D location
 # ======================================================================================================================
 
+# complex exponential of a real tensor, with added 2 dimensions at the end
+class exp_complex(nn.Module):
+    def __init__(self, setup_params):
+        super().__init__()
+        self.device = setup_params['device']
 
-class MaskPhasesToPSFs(Function):
+    def forward(self, r):
+        N, C, H, W = r.size()
+        exp_1jr = torch.zeros((N, C, H, W, 2)).to(self.device)
+        exp_1jr[:, :, :, :, 0] = torch.cos(r)
+        exp_1jr[:, :, :, :, 1] = torch.sin(r)
+        return exp_1jr
+
+
+# multiplication of two complex numbers with 2 channels tensors
+# z1 times z2 assuming complex tensors
+class multiply_complex(nn.Module):
+    def __init__(self, setup_params):
+        super().__init__()
+        self.device = setup_params['device']
+
+    def forward(self, z1, z2):
+        z1_x_z2 = torch.zeros_like(z1).to(self.device)
+        z1_x_z2[:, :, :, :, 0] = z1[:, :, :, :, 0] * z2[:, :, :, :, 0] - z1[:, :, :, :, 1] * z2[:, :, :, :, 1]
+        z1_x_z2[:, :, :, :, 1] = z1[:, :, :, :, 0] * z2[:, :, :, :, 1] + z1[:, :, :, :, 1] * z2[:, :, :, :, 0]
+        return z1_x_z2
+
+
+# abs squared of a complex tensor
+class abs_squared_complex(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, z):
+        return torch.sum(z ** 2, -1)
+
+
+# fft of complex tensor using the new function
+class fft_complex(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, z):
+        z2 = batch_ifftshift2d(z)
+        z3 = torch.view_as_real(torch.fft.fftn(torch.view_as_complex(z2), dim=(2, 3), norm="ortho"))
+        return batch_fftshift2d(z3)
+
+
+# normalizing image by number of photons
+class normalize_photons(nn.Module):
+    def __init__(self, setup_params):
+        super().__init__()
+        self.device = setup_params['device']
+
+    def forward(self, images, nphotons):
+        sumhw = images.sum(2).sum(2)
+        normfactor = nphotons / sumhw
+        images_norm = torch.zeros_like(images).to(self.device)
+        for i in range(images_norm.size(0)):
+            for j in range(images_norm.size(1)):
+                images_norm[i, j, :, :] = images[i, j, :, :] * normfactor[i, j]
+        return images_norm
+
+
+class MaskPhasesToPSFs(nn.Module):
+    def __init__(self, setup_params):
+        super().__init__()
+        self.device = setup_params['device']
+        self.exp_complex = exp_complex(setup_params)
+        self.multiply_complex = multiply_complex(setup_params)
+        self.abs_squared_complex = abs_squared_complex()
+        self.fft_complex = fft_complex()
+        self.normalize_photons = normalize_photons(setup_params)
 
     # forward path
-    @staticmethod
-    def forward(ctx, mask, phase_emitter, Nphotons, device):
+    def forward(self, mask, phase_emitter, Nphotons):
 
         # number of emitters
         Nbatch, Nemitters, H, W, ri = phase_emitter.size()
@@ -175,73 +248,21 @@ class MaskPhasesToPSFs(Function):
         phasemask4D = mask.expand(Nbatch, Nemitters, H, W)
         
         # phase term due to phase mask
-        phasemask_term = torch.zeros((Nbatch, Nemitters, H, W, ri)).to(device)
-        phasemask_term[:,:,:,:,0] = torch.cos(phasemask4D)
-        phasemask_term[:,:,:,:,1] = torch.sin(phasemask4D)
+        phasemask_term = self.exp_complex(phasemask4D)
 
         # total phase term
-        phase4D = torch.zeros((Nbatch, Nemitters, H, W, ri)).to(device)
-        phase4D[:,:,:,:,0] = phasemask_term[:,:,:,:,0]*phase_emitter[:,:,:,:,0] - phasemask_term[:,:,:,:,1]*phase_emitter[:,:,:,:,1]
-        phase4D[:,:,:,:,1] = phasemask_term[:,:,:,:,0]*phase_emitter[:,:,:,:,1] + phasemask_term[:,:,:,:,1]*phase_emitter[:,:,:,:,0]
+        phase4D = self.multiply_complex(phasemask_term, phase_emitter)
         
         # calculate the centered fourier transform on the H, W dims
-        fft_res = batch_fftshift2d(torch.fft(batch_ifftshift2d(phase4D), 2, True))
+        fft_res = self.fft_complex(phase4D)
 
         # take the absolute value squared
-        fft_abs_square = torch.sum(fft_res**2, 4)
+        fft_abs_square = self.abs_squared_complex(fft_res)
         
-        # calculate normalization factor
-        sumhw = fft_abs_square.sum(2).sum(2)
-        normfactor = Nphotons/sumhw
-
-        # depth-wise normalization factor
-        images_norm = torch.zeros((Nbatch, Nemitters, H, W)).to(device)
-        for i in range(Nbatch):
-            for j in range(Nemitters):
-                images_norm[i, j, :, :] = fft_abs_square[i, j, :, :] * normfactor[i, j]
-        
-        # save tensors for backward pass
-        ctx.device, ctx.fft_res, ctx.phasemask_term, ctx.phase_emitter = device, fft_res, phasemask_term, phase_emitter
-        ctx.normfactor, ctx.Nbatch, ctx.Nemitters, ctx.H, ctx.W = normfactor, Nbatch, Nemitters, H, W
+        # normalize image with the number of photons
+        images_norm = self.normalize_photons(fft_abs_square, Nphotons)
         
         return images_norm
-
-    # backward pass
-    @staticmethod
-    def backward(ctx, grad_output):
-
-        # extract saved tensors for gradient update
-        device, fft_res, phasemask_term, phase_emitter = ctx.device, ctx.fft_res, ctx.phasemask_term, ctx.phase_emitter
-        normfactor, Nbatch, Nemitters, H, W = ctx.normfactor, ctx.Nbatch, ctx.Nemitters, ctx.H, ctx.W
-
-        # gradient w.r.t the single-emitter images
-        grad_input = grad_output.data
-
-        # depth-wise normalization factor
-        for i in range(Nbatch):
-            for j in range(Nemitters):
-                grad_input[i, j, :, :] = grad_input[i, j, :, :] * normfactor[i, j]
-
-        # gradient of abs squared
-        grad_abs_square = torch.zeros((Nbatch, Nemitters, H, W, 2)).to(device)
-        grad_abs_square[:, :, :, :, 0] = 2*grad_input*fft_res[:, :, :, :, 0]
-        grad_abs_square[:, :, :, :, 1] = 2*grad_input*fft_res[:, :, :, :, 1]
-
-        # calculate the centered inverse fourier transform on the H, W dims
-        grad_fft = batch_fftshift2d(torch.ifft(batch_ifftshift2d(grad_abs_square), 2, True))
-        
-        # gradient w.r.t phase mask phase_term
-        grad_phasemask_term = torch.zeros((Nbatch, Nemitters, H, W, 2)).to(device)
-        grad_phasemask_term[:, :, :, :, 0] = grad_fft[:, :, :, :, 0]*phase_emitter[:, :, :, :, 0] + grad_fft[:, :, :, :, 1]*phase_emitter[:, :, :, :, 1]
-        grad_phasemask_term[:, :, :, :, 1] = -grad_fft[:, :, :, :, 0]*phase_emitter[:, :, :, :, 1] + grad_fft[:, :, :, :, 1]*phase_emitter[:, :, :, :, 0]
-
-        # gradient w.r.t the phasemask 4D
-        grad_phasemask4D = -grad_phasemask_term[:, :, :, :, 0]*phasemask_term[:, :, :, :, 1] + grad_phasemask_term[:, :, :, :, 1]*phasemask_term[:, :, :, :, 0] 
-        
-        # sum to get the final gradient
-        grad_phasemask = grad_phasemask4D.sum(0).sum(0)
-
-        return grad_phasemask, None, None, None
 
 
 # ======================================================================================================================
@@ -288,7 +309,7 @@ class BlurLayer(nn.Module):
                                                                                     1 / (stds[i] ** 2))
 
         # blur each emitter with slightly different gaussian
-        images4D_blur = F.conv2d(PSFs, MultipleGaussians, padding=(2, 2))
+        images4D_blur = F.conv2d(PSFs, MultipleGaussians, padding=(4, 4))
 
         # result
         return images4D_blur
@@ -569,6 +590,7 @@ class PhysicalLayer(nn.Module):
     def __init__(self, setup_params):
         super(PhysicalLayer, self).__init__()
         self.device = setup_params['device']
+        self.mask = MaskPhasesToPSFs(setup_params)
         self.blur = BlurLayer(setup_params)
         self.crop = Croplayer(setup_params)
         self.noise = NoiseLayer(setup_params)
@@ -577,18 +599,18 @@ class PhysicalLayer(nn.Module):
             self.norm01 = Normalize01()
 
     def forward(self, mask, phase_emitter, nphotons):
-
-        # generate the PSF images from the phase mask and xyz locations
-        PSF4D = MaskPhasesToPSFs.apply(mask, phase_emitter, nphotons, self.device)
+        
+        # generate the PSF images from the phase mask, xyz locations, and orientation params
+        PSF4D = self.mask(mask, phase_emitter, nphotons)
+        
+        # crop relevant FOV area
+        images4D_crop = self.crop(PSF4D)
 
         # blur each emitter with slightly different gaussian
-        images4D_blur = self.blur(PSF4D)
-
-        # crop relevant FOV area
-        images4D_blur_crop = self.crop(images4D_blur)
+        images4D_crop_blur = self.blur(images4D_crop)
 
         # apply the measurement noise model
-        result_noisy = self.noise(images4D_blur_crop)
+        result_noisy = self.noise(images4D_crop_blur)
 
         # [0,1] normalization to prevent scaling volnurability
         if self.norm_flag:

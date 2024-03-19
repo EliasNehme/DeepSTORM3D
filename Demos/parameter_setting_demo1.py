@@ -6,6 +6,7 @@
 from math import pi
 import scipy.io as sio
 import os
+import torch
 
 
 def demo1_parameters():
@@ -174,8 +175,8 @@ def demo1_parameters():
     # ======================================================================================
 
     # number of training and validation examples
-    ntrain = 9000
-    nvalid = 1000
+    ntrain = 900
+    nvalid = 100
 
     # path for saving training examples: images + locations for localization net or locations + photons for PSF learning
     training_data_path = path_curr_dir + "/TrainingImages_demo1/"
@@ -229,13 +230,25 @@ def demo1_parameters():
     # checkpoint dictionary
     checkpoint_dict = {'resume_training': resume_training, 'num_epochs_resume': num_epochs_resume,
                        'checkpoint_path': checkpoint_path}
+    
+    # ======================================================================================
+    # device to use for training/validation (optimally should be a cuda device)
+    # ======================================================================================
+    
+    # device to train/evaluate on
+    device_id = 0
+    device = torch.device("cuda:" + str(device_id) if torch.cuda.is_available() else "cpu")
+    
+    # device dictionary
+    device_dict = {'device': device}
 
     # ======================================================================================
     # final resulting dictionary including all parameters
     # ======================================================================================
 
     settings = {**mask_opts, **num_particles_dict, **nsig_dict, **blur_dict, **nonunif_bg_dict, **read_noise_dict,
-                **norm_dict, **optics_dict, **data_dims_dict, **training_dict, **learning_dict, **checkpoint_dict}
+                **norm_dict, **optics_dict, **data_dims_dict, **training_dict, **learning_dict, **checkpoint_dict, 
+                **device_dict}
 
     return settings
 

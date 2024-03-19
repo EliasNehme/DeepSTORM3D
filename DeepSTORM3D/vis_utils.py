@@ -111,12 +111,14 @@ class PhysicalLayerVisualization(nn.Module):
     def __init__(self, setup_params, blur_flag, noise_flag, norm_flag):
         super(PhysicalLayerVisualization, self).__init__()
         self.device = setup_params['device']
+        self.mask = MaskPhasesToPSFs(setup_params)
         if blur_flag:
-            setup_params['blur_std_range'] = [0.99, 1.01]
-            self.blur = BlurLayer(setup_params)
+            std_max = setup_params['blur_std_range'][1]
+            setup_params['blur_std_range'] = [std_max, std_max]
         else:
-            setup_params['blur_std_range'] = [0.75, 0.75]
-            self.blur = BlurLayer(setup_params)
+            std_min = setup_params['blur_std_range'][0]
+            setup_params['blur_std_range'] = [std_min, std_min]
+        self.blur = BlurLayer(setup_params)
         self.crop = Croplayer(setup_params)
         self.noise = NoiseLayer(setup_params)
         self.norm01 = Normalize01()
@@ -124,29 +126,29 @@ class PhysicalLayerVisualization(nn.Module):
         self.norm_flag = norm_flag
 
     def forward(self, mask, phase_emitter, nphotons):
-
-        # generate the PSF images from the phase mask and xyz locations
-        PSF4D = MaskPhasesToPSFs.apply(mask, phase_emitter, nphotons, self.device)
-
-        # blur each emitter with slightly different gaussian
-        images4D_blur = self.blur(PSF4D)
-
+        
+        # generate the PSF images from the phase mask, xyz locations, and orientation params
+        PSF4D = self.mask(mask, phase_emitter, nphotons)
+        
         # crop relevant FOV area
-        images5D_blur_crop = self.crop(images4D_blur)
+        images4D_crop = self.crop(PSF4D)
+        
+        # blur each emitter with slightly different gaussian
+        images4D_crop_blur = self.blur(images4D_crop)
 
-        # approximate poisson noise with a gaussian noise
+        # apply the measurement noise model
         if self.noise_flag:
-            result_noisy = self.noise(images5D_blur_crop)
+            result_noisy = self.noise(images4D_crop_blur)
         else:
-            result_noisy = images5D_blur_crop
+            result_noisy = images4D_crop_blur
 
-        # [0,1] normalization to prevent scaling vulnerability
+        # [0,1] normalization to prevent scaling volnurability
         if self.norm_flag:
-            result = self.norm01(result_noisy)
+            result_noisy_01 = self.norm01(result_noisy)
         else:
-            result = result_noisy
+            result_noisy_01 = result_noisy
 
-        return result
+        return result_noisy_01
 
 
 # show PSF image
@@ -160,3 +162,4 @@ def ShowRecNetInput(input_var, title_str):
     plt.imshow(net_input)
     plt.colorbar()
     plt.title(title_str)
+
