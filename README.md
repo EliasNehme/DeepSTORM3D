@@ -107,5 +107,5 @@ This project is covered under the [**MIT License**](https://github.com/EliasNehm
 
 # Contact
 
-To report any bugs, suggest improvements, or ask questions, please contact me at "seliasne@campus.technion.ac.il"
+To report any bugs, suggest improvements, or ask questions, please contact me at "seliasne@gmail.com"
  

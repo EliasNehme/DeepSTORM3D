@@ -175,8 +175,8 @@ def demo1_parameters():
     # ======================================================================================
 
     # number of training and validation examples
-    ntrain = 900
-    nvalid = 100
+    ntrain = 9000
+    nvalid = 1000
 
     # path for saving training examples: images + locations for localization net or locations + photons for PSF learning
     training_data_path = path_curr_dir + "/TrainingImages_demo1/"

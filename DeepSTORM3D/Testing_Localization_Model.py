@@ -177,7 +177,6 @@ def test_model(path_results, postprocess_params, exp_imgs_path=None, seed=66):
 
         # read all imgs in the experimental data directory assuming ".tif" extension
         img_names = glob.glob(exp_imgs_path + '*.tif')
-        img_names = sort_names_tif(img_names)
 
         # if given only 1 image then show xyz in 3D and recovered image
         if len(img_names) == 1:
@@ -247,7 +246,7 @@ def test_model(path_results, postprocess_params, exp_imgs_path=None, seed=66):
             # ==========================================================================================================
 
             # visualization module to visualize the 3D positions recovered by the net as images
-            _, _, H, W = exp_im.shape
+            H, W = exp_im.shape
             setup_params['H'], setup_params['W'] = H, W
             psf_module_vis = PhysicalLayerVisualization(setup_params, 0, 0, 1)
             
@@ -284,6 +283,9 @@ def test_model(path_results, postprocess_params, exp_imgs_path=None, seed=66):
             # ==========================================================================================================
             # create a data generator to efficiently load imgs for temporal acquisitions
             # ==========================================================================================================
+            
+            # sort images by number (assumed names are <digits>.tif)
+            img_names = sort_names_tif(img_names)
 
             # instantiate the data class and create a data loader for testing
             num_imgs = len(img_names)

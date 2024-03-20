@@ -6,6 +6,7 @@ import numpy as np
 from DeepSTORM3D.physics_utils import EmittersToPhases
 from DeepSTORM3D.helper_utils import normalize_01
 from skimage.io import imread
+import os
 
 
 # ======================================================================================================================
@@ -49,7 +50,7 @@ def generate_batch(batch_size, setup_params, seed=None):
     
     # randomly vary the number of emitters
     num_particles_range = setup_params['num_particles_range']
-    num_particles = np.asscalar(np.random.randint(num_particles_range[0], num_particles_range[1], 1))
+    num_particles = np.random.randint(num_particles_range[0], num_particles_range[1], 1).item()
     
     # distrbution for sampling the number of counts per emitter
     if setup_params['nsig_unif']:
@@ -155,9 +156,9 @@ def batch_xyz_to_boolean_grid(xyz_np, setup_params):
     
     # resulting 3D boolean tensor
     if batch_size > 1:
-        boolean_grid = torch.sparse.FloatTensor(ibool, vals, torch.Size([batch_size, D, H, W])).to_dense()
+        boolean_grid = torch.sparse_coo_tensor(ibool, vals, torch.Size([batch_size, D, H, W]), dtype=torch.float32).to_dense()
     else:
-        boolean_grid = torch.sparse.FloatTensor(ibool, vals, torch.Size([D, H, W])).to_dense()
+        boolean_grid = torch.sparse_coo_tensor(ibool, vals, torch.Size([D, H, W]), dtype=torch.float32).to_dense()
     
     return boolean_grid
 
@@ -285,8 +286,8 @@ class ExpDataset(Dataset):
 def sort_names_tif(img_names):
     nums = []
     for i in img_names:
-        i2 = i .split(".tif")
-        i3 = i2[0].split("/")
+        i2 = i.split(".tif")
+        i3 = os.path.split(i2[0])
         nums.append(int(i3[-1]))
     indices = np.argsort(np.array(nums))
     fixed_names = [img_names[i] for i in indices]

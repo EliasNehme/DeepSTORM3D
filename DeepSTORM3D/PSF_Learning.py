@@ -245,8 +245,8 @@ def learn_mask(setup_params):
         # sanity check: record maximal value and sum of last validation sample
         max_last = outputs.max()
         sum_last = outputs.sum()/params_valid['batch_size']
-        learning_results['max_valid'].append(max_last)
-        learning_results['sum_valid'].append(sum_last)
+        learning_results['max_valid'].append(max_last.item())
+        learning_results['sum_valid'].append(sum_last.item())
 
         # saving checkpoint: save best model so far
         if mean_valid_loss < (valid_loss_prev - 1e-4):
