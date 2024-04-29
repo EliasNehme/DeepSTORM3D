@@ -268,10 +268,12 @@ class ExpDataset(Dataset):
             im_np = (im_np - self.global_factors[0]) / self.global_factors[1]
 
         # alter the mean and std to match the training set
+        """
         if self.project_01 is True:
             im_np = (im_np - im_np.mean()) / im_np.std()
             im_np = im_np * self.train_stats[1] + self.train_stats[0]
-
+        """
+        
         # turn image into torch tensor with 1 channel
         im_np = np.expand_dims(im_np, 0)
         im_tensor = torch.from_numpy(im_np)
