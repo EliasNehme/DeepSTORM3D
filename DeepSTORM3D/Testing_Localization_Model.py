@@ -102,9 +102,11 @@ def test_model(path_results, postprocess_params, exp_imgs_path=None, seed=66):
             test_input_im = (test_input_im - setup_params['global_factors'][0]) / setup_params['global_factors'][1]
 
         # alter the mean and std to match the training set
+        """
         if setup_params['project_01'] is True:
             test_input_im = (test_input_im - test_input_im.mean())/test_input_im.std()
             test_input_im = test_input_im*setup_params['train_stats'][1] + setup_params['train_stats'][0]
+        """
 
         # ==============================================================================================================
         # predict the positions by post-processing the net's output
@@ -196,10 +198,12 @@ def test_model(path_results, postprocess_params, exp_imgs_path=None, seed=66):
                 exp_img = (exp_img - setup_params['global_factors'][0]) / setup_params['global_factors'][1]
 
             # alter the mean and std to match the training set
+            """
             if setup_params['project_01'] is True:
                 exp_img = (exp_img - exp_img.mean()) / exp_img.std()
                 exp_img = exp_img * setup_params['train_stats'][1] + setup_params['train_stats'][0]
-
+            """
+            
             # turn image into torch tensor with 1 channel on GPU
             exp_img = np.expand_dims(exp_img, 0)
             exp_img = np.expand_dims(exp_img, 0)
